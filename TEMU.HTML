@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width>, initial-scale=1.0">
+    <title>INTRO</title>
+</head>
+<body>
+    <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vulkov — Bio</title>
+  <meta name="description" content="Personal bio page for Vulkov with a Ghost Recon‑style background." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg-image: url('https://imgs.search.brave.com/ljjgxCN7rR7LXa6NCI1lZHxFHjsbpTe5LSb9JFBFrQ4/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly9pLnBp/bmltZy5jb20vb3Jp/Z2luYWxzLzNhLzgw/L2Q1LzNhODBkNTBi/ZTU4NWFiNDE3NGU1/ZGYzZTZlNTBkMTQ5/LmpwZw'); /* 👉 Replace with your Ghost Recon logo image path */
+      --accent: #00e5ff;
+      --text: 255,255,255;
+      --card: 18, 22, 28;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:"Inter", system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial, "Noto Sans", "Apple Color Emoji", "Segoe UI Emoji";
+      color: rgba(var(--text), 0.92);
+      background: #0b0f14;
+      overflow-x:hidden;
+    }
+    /* Background image with subtle parallax + overlay */
+    .bg{
+      position:fixed; inset:0; z-index:-2;
+      background-image: var(--bg-image);
+      background-size: contain;         /* keeps logo crisp */
+      background-repeat: no-repeat;
+      background-position: center;
+      filter: grayscale(100%) contrast(105%) brightness(65%);
+      opacity: 0.18;                    /* faint so content pops */
+      transform: translateZ(0);
+    }
+    .grid{
+      min-height:100dvh; display:grid; place-items:center; padding: clamp(16px, 4vw, 48px);
+      background: radial-gradient(1200px 800px at 70% -10%, rgba(0,229,255,0.15), transparent 60%),
+                  radial-gradient(900px 700px at 0% 100%, rgba(0,229,255,0.12), transparent 60%);
+    }
+    .card{
+      width:min(860px, 92vw);
+      background: rgba(var(--card), 0.66);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 20px;
+      backdrop-filter: blur(10px) saturate(115%);
+      box-shadow: 0 20px 60px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,0.04);
+      overflow:hidden;
+      animation: floatIn .7s cubic-bezier(.2,.7,.2,1) both;
+    }
+    .banner{
+      position: relative; height: 120px; background: linear-gradient(135deg, rgba(0,229,255,0.2), transparent 40%), linear-gradient(180deg, rgba(255,255,255,0.06), transparent 70%);
+      border-bottom:1px solid rgba(255,255,255,0.12);
+    }
+    .badge{
+      position:absolute; bottom:-28px; left:24px;
+      display:inline-flex; gap:10px; align-items:center;
+      padding:10px 14px; border-radius:14px; border:1px solid rgba(255,255,255,0.14);
+      background: rgba(18, 22, 28, 0.8);
+      backdrop-filter: blur(6px);
+      box-shadow: 0 6px 18px rgba(0,0,0,.25);
+      font-weight:600; letter-spacing:.2px;
+    }
+    .dot{width:10px; height:10px; border-radius:999px; background: var(--accent); box-shadow:0 0 18px var(--accent)}
+    .content{padding: 56px 28px 28px;}
+    h1{margin:0 0 8px; font-size: clamp(28px, 4.6vw, 40px); line-height:1.1; font-weight:800}
+    .sub{margin:0 0 18px; font-size: clamp(14px, 2.4vw, 16px); color: rgba(var(--text), .7)}
+    p{line-height:1.7; font-size: clamp(15px, 2.6vw, 17px);}
+    .pill{
+      display:inline-block; margin: 14px 10px 0 0; padding:8px 12px; font-size:13px; font-weight:600; letter-spacing:.25px; color:#071015;
+      background: linear-gradient(180deg, #00e5ff, #7af6ff);
+      border-radius:999px; border: none;
+    }
+    .footer{display:flex; gap:12px; flex-wrap:wrap; margin-top:22px; color: rgba(var(--text), .7); font-size: 13px}
+    @keyframes floatIn{from{opacity:0; transform: translateY(10px) scale(.98)} to{opacity:1; transform:none}}
+    /* Accessibility: prefers-reduced-motion */
+    @media (prefers-reduced-motion: reduce){ .card{animation:none} }
+  </style>
+</head>
+<body>
+  <div class="bg" role="img" aria-label="Ghost Recon logo background"></div>
+  <main class="grid">
+    <article class="card" aria-labelledby="title">
+      <div class="banner">
+        <div class="badge" aria-label="Status badge">
+          <span class="dot" aria-hidden="true"></span>
+          <span>Vulkov — Student • India</span>
+        </div>
+      </div>
+      <div class="content">
+        <h1 id="title">Hello, I’m <span style="color:var(--accent)">Vulkov</span>.</h1>
+        <p class="sub">18 • Born on April 20, 2007 • Multilingual (first language: Tulu)</p>
+        <p>
+          Hello everyone, my name is Vulkov. I’m 18 years old, born on April 20, 2007, and I live in India. My first language is Tulu, though I speak and understand multiple languages, which helps me connect with a wide variety of people.
+        </p>
+        <p>
+          I’m a student who enjoys exploring many different areas—whether it’s music (especially EDM, techno, phonk, and rave), anime and reading, gaming, sports like badminton, or even diving into nature and biology. I like keeping my life colorful and filled with experiences from all directions.
+        </p>
+        <p>
+          At my core, I’m someone who is curious, creative, and always looking for new things to learn, whether that’s in technology, science, or everyday life.
+        </p>
+        <div>
+          <span class="pill" aria-label="Interest tag: EDM">EDM</span>
+          <span class="pill" aria-label="Interest tag: Techno">Techno</span>
+          <span class="pill" aria-label="Interest tag: Phonk">Phonk</span>
+          <span class="pill" aria-label="Interest tag: Anime">Anime</span>
+          <span class="pill" aria-label="Interest tag: Badminton">Badminton</span>
+          <span class="pill" aria-label="Interest tag: Biology">Biology</span>
+          <span class="pill" aria-label="Interest tag: Gaming">Gaming</span>
+        </div>
+        <div class="footer" role="contentinfo">
+          <span>📍 India</span>
+          <span>🌐 Speaks multiple languages</span>
+          <span>🎧 Music head</span>
+        </div>
+      </div>
+    </article>
+  </main>
+
+  <!-- Instructions: 
+    1) Place a Ghost Recon logo image in the same folder as this file and name it exactly: ghost-recon-logo.png
+       (or change the --bg-image path in :root above to your own file/URL that you have the rights to use.)
+    2) Open this file in a browser.
+  -->
+</body>
+</html>
