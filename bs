@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Blessy Suju: Turbo Queen</title>
+  <style>
+    body {
+      background: linear-gradient(#111, #000);
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1 {
+      margin: 10px 0;
+      color: #ff69b4;
+      text-shadow: 0 0 10px hotpink;
+    }
+
+    #gameArea {
+      position: relative;
+      width: 400px;
+      height: 600px;
+      margin: 20px auto;
+      background: #222;
+      border: 3px solid #f0f0f0;
+      overflow: hidden;
+      box-shadow: 0 0 20px #ff69b4;
+    }
+
+    .car {
+      position: absolute;
+      width: 40px;
+      height: 60px;
+      background: hotpink;
+      border-radius: 10px;
+      box-shadow: 0 0 15px #ff69b4;
+    }
+
+    .rival {
+      background: crimson;
+      box-shadow: 0 0 15px red;
+    }
+
+    .missile {
+      position: absolute;
+      width: 8px;
+      height: 20px;
+      background: yellow;
+      border-radius: 4px;
+      box-shadow: 0 0 10px gold;
+    }
+
+    #score {
+      font-size: 18px;
+      margin: 10px;
+      text-shadow: 0 0 8px cyan;
+    }
+  </style>
+</head>
+<body>
+  <h1>Blessy Suju: Turbo Queen 🏁</h1>
+  <p>Use ←, →, A, D to steer. W/↑ = Up, S/↓ = Down. SPACE = Fire Missile 🚀</p>
+  <div id="score">Score: 0</div>
+  <div id="gameArea">
+    <div id="blessy" class="car" style="left:180px; top:520px;"></div>
+  </div>
+
+  <script>
+    const blessy = document.getElementById("blessy");
+    const gameArea = document.getElementById("gameArea");
+    const scoreDisplay = document.getElementById("score");
+
+    let blessyX = 180;
+    let blessyY = 520;
+    let speed = 3;
+    let score = 0;
+
+    let leftPressed = false;
+    let rightPressed = false;
+    let upPressed = false;
+    let downPressed = false;
+    let spacePressed = false;
+
+    // Rivals
+    const rivals = [];
+    for (let i = 0; i < 5; i++) {
+      const rival = document.createElement("div");
+      rival.classList.add("car", "rival");
+      rival.style.left = Math.floor(Math.random() * 360) + "px";
+      rival.style.top = -150 * i + "px";
+      gameArea.appendChild(rival);
+      rivals.push(rival);
+    }
+
+    // Missiles
+    const missiles = [];
+
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowLeft" || e.key === "a") leftPressed = true;
+      if (e.key === "ArrowRight" || e.key === "d") rightPressed = true;
+      if (e.key === "ArrowUp" || e.key === "w") upPressed = true;
+      if (e.key === "ArrowDown" || e.key === "s") downPressed = true;
+      if (e.key === " ") spacePressed = true;
+    });
+
+    document.addEventListener("keyup", (e) => {
+      if (e.key === "ArrowLeft" || e.key === "a") leftPressed = false;
+      if (e.key === "ArrowRight" || e.key === "d") rightPressed = false;
+      if (e.key === "ArrowUp" || e.key === "w") upPressed = false;
+      if (e.key === "ArrowDown" || e.key === "s") downPressed = false;
+      if (e.key === " ") spacePressed = false;
+    });
+
+    function fireMissile() {
+      const missile = document.createElement("div");
+      missile.classList.add("missile");
+      missile.style.left = blessyX + 16 + "px";
+      missile.style.top = blessyY - 20 + "px";
+      gameArea.appendChild(missile);
+      missiles.push(missile);
+    }
+
+    function gameLoop() {
+      // Move player
+      if (leftPressed && blessyX > 0) blessyX -= 4;
+      if (rightPressed && blessyX < 360) blessyX += 4;
+      if (upPressed && blessyY > 0) blessyY -= 4;
+      if (downPressed && blessyY < 540) blessyY += 4;
+      blessy.style.left = blessyX + "px";
+      blessy.style.top = blessyY + "px";
+
+      // Fire missile
+      if (spacePressed) {
+        fireMissile();
+        spacePressed = false; // one missile per tap
+      }
+
+      // Move missiles
+      missiles.forEach((missile, i) => {
+        let y = parseInt(missile.style.top);
+        y -= 6;
+        if (y < -20) {
+          missile.remove();
+          missiles.splice(i, 1);
+        } else {
+          missile.style.top = y + "px";
+        }
+      });
+
+      // Move rivals
+      rivals.forEach((rival, idx) => {
+        let y = parseInt(rival.style.top);
+        y += speed;
+        if (y > 600) {
+          y = -100;
+          rival.style.left = Math.floor(Math.random() * 360) + "px";
+          score++;
+          scoreDisplay.textContent = "Score: " + score;
+        }
+        rival.style.top = y + "px";
+
+        // Collision with player
+        if (
+          Math.abs(y - blessyY) < 50 &&
+          Math.abs(parseInt(rival.style.left) - blessyX) < 40
+        ) {
+          alert("Blessy Suju Crashed! 💥 Final Score: " + score);
+          location.reload();
+        }
+
+        // Missile hits rival
+        missiles.forEach((missile, mi) => {
+          let my = parseInt(missile.style.top);
+          let mx = parseInt(missile.style.left);
+          let rx = parseInt(rival.style.left);
+          if (Math.abs(my - y) < 40 && Math.abs(mx - rx) < 40) {
+            rival.style.top = "-100px";
+            rival.style.left = Math.floor(Math.random() * 360) + "px";
+            missile.remove();
+            missiles.splice(mi, 1);
+            score += 5;
+            scoreDisplay.textContent = "Score: " + score;
+          }
+        });
+      });
+
+      requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
+  </script>
+</body>
+</html>
