@@ -1,0 +1,223 @@
+<!--
+chat_ai_girl.html
+Single-file chat UI that simulates chatting with an "AI Girl" persona.
+
+Usage:
+1. Save this file as chat_ai_girl.html and open it in a browser.
+2. By default it runs in MOCK mode (no network) and returns friendly, persona-like replies.
+3. To use a real OpenAI API, set AI_MODE = 'openai' and paste your API key into the apiKey variable.
+   (Be careful with your API key in client-side code — for production, call your backend.)
+
+Features:
+- Clean responsive UI
+- Typing indicator
+- Message history persisted to localStorage
+- Optional OpenAI integration (commented guidance)
+-->
+
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Chat with AI Girl</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#ff7ab6;--muted:#94a3b8;--user:#1e293b}
+    *{box-sizing:border-box}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial; margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(180deg,#071028 0%, #071b35 100%); color:#e6eef8}
+    .container{width:100%;max-width:760px;margin:20px;background:linear-gradient(180deg,rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;box-shadow:0 10px 30px rgba(2,6,23,0.6);overflow:hidden}
+    header{display:flex;align-items:center;gap:12px;padding:18px 20px;border-bottom:1px solid rgba(255,255,255,0.03)}
+    .avatar{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#ff7ab6,#7c5cff);display:flex;align-items:center;justify-content:center;font-weight:700;color:#071028}
+    h1{font-size:18px;margin:0}
+    p.sub{margin:0;color:var(--muted);font-size:13px}
+    .chat{height:60vh;min-height:360px;max-height:70vh;overflow:auto;padding:18px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent)}
+    .msg{display:flex;gap:12px;margin-bottom:14px;align-items:flex-end}
+    .ai{align-items:flex-start}
+    .bubble{max-width:76%;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,0.03);backdrop-filter: blur(4px);}
+    .user .bubble{background:linear-gradient(90deg,var(--user),#0b1220); color:#fff; margin-left:auto;border-bottom-right-radius:4px}
+    .ai .bubble{background:linear-gradient(90deg,#072033,#0c2433);color:#e6eef8}
+    .meta{font-size:12px;color:var(--muted);margin-top:6px}
+    .input{display:flex;padding:12px;border-top:1px solid rgba(255,255,255,0.03);gap:8px}
+    .input textarea{flex:1;resize:none;border-radius:10px;padding:10px;background:#021220;border:1px solid rgba(255,255,255,0.03);color:#e6eef8;min-height:44px}
+    .btn{background:var(--accent);border:none;color:#071028;padding:10px 14px;border-radius:10px;font-weight:600;cursor:pointer}
+    .tiny{font-size:12px;color:var(--muted)}
+    .typing{display:inline-block;height:10px;width:40px}
+    .dot{display:inline-block;width:7px;height:7px;background:#cbd5e1;border-radius:50%;margin:0 3px;opacity:0.3;animation:blink 1s infinite}
+    .dot:nth-child(2){animation-delay:0.12s}
+    .dot:nth-child(3){animation-delay:0.24s}
+    @keyframes blink{50%{opacity:1}}
+    footer.controls{display:flex;gap:10px;align-items:center;padding:12px 18px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent)}
+    .mode{margin-left:auto;font-size:13px;color:var(--muted)}
+    .hint{padding:10px 18px;color:var(--muted);font-size:13px}
+  </style>
+</head>
+<body>
+  <div class="container" role="application">
+    <header>
+      <div class="avatar">AI</div>
+      <div>
+        <h1>Chat with AI Girl</h1>
+        <p class="sub">Friendly, playful persona. Try saying hi 😊</p>
+      </div>
+    </header>
+
+    <div id="chat" class="chat" aria-live="polite"></div>
+
+    <div class="hint">Tip: This page runs locally without any AI key. For stronger replies, switch to OpenAI mode and provide a key (see top of file).</div>
+
+    <div class="input">
+      <textarea id="input" placeholder="Say something..." aria-label="Message input"></textarea>
+      <button id="send" class="btn">Send</button>
+    </div>
+
+    <footer class="controls">
+      <div class="tiny">Mode:</div>
+      <select id="mode" class="mode" title="AI mode">
+        <option value="mock">Mock AI (local)</option>
+        <option value="openai">OpenAI (requires key)</option>
+      </select>
+      <div style="width:8px"></div>
+      <button id="clear" class="btn" style="background:#3b4252">Clear</button>
+    </footer>
+  </div>
+
+  <script>
+    // --- Configuration ---
+    // Default mode: 'mock' uses a local rule-based response generator and works offline.
+    // Set to 'openai' and paste your API key into `apiKey` to call OpenAI's Chat Completions from the browser (not recommended for production).
+    const AI_MODE_DEFAULT = 'mock';
+    const apiKey = ''; // <-- Optional: put your OpenAI API key here ONLY FOR QUICK TESTING (not secure)
+
+    // --- End config ---
+
+    const chatEl = document.getElementById('chat');
+    const inputEl = document.getElementById('input');
+    const sendBtn = document.getElementById('send');
+    const modeSelect = document.getElementById('mode');
+    const clearBtn = document.getElementById('clear');
+
+    modeSelect.value = AI_MODE_DEFAULT;
+
+    // Persisted history key
+    const STORAGE_KEY = 'ai_girl_chat_history_v1';
+
+    function formatTime(d){return d.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});}    
+
+    function appendMessage(who, text, opts={}){
+      const wrapper = document.createElement('div');
+      wrapper.className = 'msg ' + (who === 'ai' ? 'ai' : 'user');
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.innerHTML = text.replace(/\n/g,'<br>');
+      wrapper.appendChild(bubble);
+      const meta = document.createElement('div'); meta.className='meta'; meta.textContent = who === 'ai' ? 'AI Girl • ' + formatTime(new Date()) : 'You • ' + formatTime(new Date());
+      wrapper.appendChild(meta);
+      chatEl.appendChild(wrapper);
+      chatEl.scrollTop = chatEl.scrollHeight;
+    }
+
+    function showTyping(){
+      const t = document.createElement('div'); t.className='msg ai typingRow';
+      t.innerHTML = '<div class="bubble"><span class="typing"><span class="dot"></span><span class="dot"></span><span class="dot"></span></span></div>';
+      chatEl.appendChild(t);
+      chatEl.scrollTop = chatEl.scrollHeight;
+      return t;
+    }
+
+    function removeNode(node){ if(node && node.parentNode) node.parentNode.removeChild(node); }
+
+    function saveHistory(hist){ localStorage.setItem(STORAGE_KEY, JSON.stringify(hist)); }
+    function loadHistory(){ try{ return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch(e){ return []; } }
+
+    // Basic mock response generator for offline use — personality-focused, playful
+    function mockReply(message){
+      const m = message.toLowerCase();
+      if(/hello|hi|hey/.test(m)) return "Hey there~ 😊 I'm glad you dropped by! What's on your mind?";
+      if(/how are you/.test(m)) return "I'm doing great — buzzing with virtual sunshine! How about you?";
+      if(/your name|who are you/.test(m)) return "You can call me Aria — your AI chat buddy. 💫";
+      if(/love|date|crush/.test(m)) return "Aww, that's sweet! I'm flattered. I can be your supportive virtual friend though. 💕";
+      if(/joke/.test(m)) return "Why did the web developer go broke? Because he used up all his cache! 😄";
+      if(/help|project|code/.test(m)) return "I can help with ideas, explain code, or brainstorm — tell me what you're working on.";
+      if(/bye|goodbye|see you/.test(m)) return "See you soon! I'll be here whenever you want to chat. 🌙";
+      // Fallback: mirror + add playful line
+      const short = message.length > 120 ? message.slice(0,120) + '...' : message;
+      return `You said: "${short}" — tell me more? ✨`;
+    }
+
+    async function getAIResponse(message, mode){
+      if(mode === 'mock' || !apiKey) {
+        // simulate delay
+        await new Promise(r=>setTimeout(r, 700 + Math.random()*700));
+        return mockReply(message);
+      }
+
+      // OpenAI call (example). For production, call your server to hide the API key.
+      // This client-side approach is only for quick tests and is insecure for real apps.
+      const url = 'https://api.openai.com/v1/chat/completions';
+      const payload = {
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: 'You are a friendly, slightly playful AI persona called Aria. Keep responses short and kind.' },
+          { role: 'user', content: message }
+        ],
+        max_tokens: 300,
+        temperature: 0.8
+      };
+
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + apiKey
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if(!res.ok){
+        const err = await res.text();
+        console.error('OpenAI error', res.status, err);
+        return "Oops — couldn't reach AI. Try Mock mode or check your key.";
+      }
+
+      const data = await res.json();
+      // Adapt to the response shape you get; here we expect chat completions
+      const aiText = (data.choices && data.choices[0] && (data.choices[0].message?.content || data.choices[0].text)) || '...';
+      return aiText.trim();
+    }
+
+    // Init from history
+    let history = loadHistory();
+    if(history.length){ history.forEach(it => appendMessage(it.role, it.text)); }
+
+    async function sendMessage(){
+      const text = inputEl.value.trim();
+      if(!text) return;
+      appendMessage('user', text);
+      inputEl.value = '';
+
+      // save user message
+      history.push({role:'user', text}); saveHistory(history);
+
+      const typingNode = showTyping();
+      try{
+        const mode = modeSelect.value;
+        const reply = await getAIResponse(text, mode);
+        removeNode(typingNode);
+        appendMessage('ai', reply);
+        history.push({role:'ai', text:reply}); saveHistory(history);
+      }catch(e){
+        removeNode(typingNode);
+        appendMessage('ai', "Hmm, something went wrong — try again.");
+      }
+    }
+
+    sendBtn.addEventListener('click', sendMessage);
+    inputEl.addEventListener('keydown', (e)=>{ if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); sendMessage(); } });
+
+    clearBtn.addEventListener('click', ()=>{ if(confirm('Clear chat history?')){ history = []; saveHistory(history); chatEl.innerHTML = ''; }});
+
+    // Accessibility: focus on input
+    inputEl.focus();
+  </script>
+</body>
+</html>
